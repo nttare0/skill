@@ -20,6 +20,9 @@ filler analysis.
 |---|---|
 | `SKILL.md` | The skill itself — operational rules plus a pre-delivery self-check |
 | `reference/ai-writing-tells.md` | Full catalog: vocabulary by LLM era, construction patterns, real captured examples, sources |
+| `tests/check_tells.py` | Tell checker: scans text for the tells and verifies the lists stay in sync with SKILL.md |
+| `tests/samples/ai_style.txt` | "Before" sample — a typical LLM-flavored draft, full of tells |
+| `tests/samples/human_style.txt` | "After" sample — the same content rewritten by applying the skill |
 
 ## Install
 
@@ -43,6 +46,28 @@ Trigger naturally with requests like:
 The skill also includes a mandatory **self-check pass**: before delivering, the model scans
 its own draft for the tell list (banned vocabulary, "serves as", negative parallelisms,
 tacked-on "-ing" analysis, emoji, spaced em dashes, placeholders…) and fixes any hits.
+
+## Testing
+
+The repo ships a tell checker that encodes the skill's rules as regexes, so the skill's
+claims are verifiable:
+
+```bash
+# 1. List sync: the checker's banned vocabulary must match SKILL.md's table exactly
+# 2. Detection: every banned entry and context rule must actually fire
+python3 tests/check_tells.py --self-check --test-detection
+
+# 3. "Before/after" demonstration:
+#    ai_style.txt    -> should FAIL (it's the un-skilled, LLM-flavored draft)
+#    human_style.txt -> should be CLEAN (the same content after applying the skill)
+python3 tests/check_tells.py tests/samples/ai_style.txt tests/samples/human_style.txt
+```
+
+Expected: the self-check and detection test pass, `ai_style.txt` reports hard tells
+(banned words, "not only…but also", emoji, spaced em dashes, "it's important to note",
+tacked-on "-ing" flourishes…), and `human_style.txt` reports **CLEAN**. The checker is a
+supporting tool, not a detector to trust blindly — like Wikipedia's own caveats, no
+automated check is definitive; it exists to catch regressions in the skill's examples.
 
 ## License
 
